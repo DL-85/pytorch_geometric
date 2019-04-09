@@ -1,10 +1,8 @@
 class Center(object):
+    r"""Centers node positions around the origin."""
+
     def __call__(self, data):
-        pos = data.pos
-
-        mean = data.pos.mean(dim=0).view(1, -1)
-        data.pos = pos - mean
-
+        data.pos = data.pos - data.pos.mean(dim=0, keepdim=True)
         return data
 
     def __repr__(self):

@@ -2,54 +2,34 @@ import torch
 
 
 class Cartesian(object):
-    r"""Saves the globally normalized spatial relation of linked nodes as
-    Cartesian coordinates (mapped to the fixed interval :math:`[0, 1]`)
-
-    .. math::
-        \mathbf{u}(i,j) = 0.5 + \frac{\mathbf{pos}_j - \mathbf{pos}_i}{2 \cdot
-        \max_{(v, w) \in \mathcal{E}} | \mathbf{pos}_w - \mathbf{pos}_v|}
-
-    in its edge attributes.
+    r"""Saves the relative Cartesian coordinates of linked nodes in its edge
+    attributes.
 
     Args:
-        cat (bool, optional): Concat pseudo-coordinates to edge attributes
-            instead of replacing them. (default: :obj:`True`)
-
-    .. testsetup::
-
-        import torch
-        from torch_geometric.data import Data
-
-    .. testcode::
-
-        from torch_geometric.transforms import Cartesian
-
-        pos = torch.tensor([[-1, 0], [0, 0], [2, 0]], dtype=torch.float)
-        edge_index = torch.tensor([[0, 1, 1, 2], [1, 0, 2, 1]])
-        data = Data(edge_index=edge_index, pos=pos)
-
-        data = Cartesian()(data)
-
-        print(data.edge_attr)
-
-    .. testoutput::
-
-        tensor([[ 0.7500,  0.5000],
-                [ 0.2500,  0.5000],
-                [ 1.0000,  0.5000],
-                [ 0.0000,  0.5000]])
+        norm (bool, optional): If set to :obj:`False`, the output will not be
+            normalized to the interval :math:`{[0, 1]}^D`.
+            (default: :obj:`True`)
+        max_value (float, optional): If set and :obj:`norm=True`, normalization
+            will be performed based on this value instead of the maximum value
+            found in the data. (default: :obj:`None`)
+        cat (bool, optional): If set to :obj:`False`, all existing edge
+            attributes will be replaced. (default: :obj:`True`)
     """
 
-    def __init__(self, cat=True):
+    def __init__(self, norm=True, max_value=None, cat=True):
+        self.norm = norm
+        self.max = max_value
         self.cat = cat
 
     def __call__(self, data):
         (row, col), pos, pseudo = data.edge_index, data.pos, data.edge_attr
 
         cart = pos[col] - pos[row]
-        cart = cart / (2 * cart.abs().max())
-        cart += 0.5
         cart = cart.view(-1, 1) if cart.dim() == 1 else cart
+
+        if self.norm:
+            max_value = cart.abs().max() if self.max is None else self.max
+            cart = cart / (2 * max_value) + 0.5
 
         if pseudo is not None and self.cat:
             pseudo = pseudo.view(-1, 1) if pseudo.dim() == 1 else pseudo
@@ -60,4 +40,5 @@ class Cartesian(object):
         return data
 
     def __repr__(self):
-        return '{}(cat={})'.format(self.__class__.__name__, self.cat)
+        return '{}(norm={}, max_value={})'.format(self.__class__.__name__,
+                                                  self.norm, self.max)

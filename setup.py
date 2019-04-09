@@ -1,16 +1,19 @@
 from setuptools import setup, find_packages
 
-__version__ = '0.2.0'
+__version__ = '1.1.3'
 url = 'https://github.com/rusty1s/pytorch_geometric'
 
 install_requires = [
     'numpy',
     'scipy',
     'networkx',
+    'scikit-learn',
     'plyfile',
+    'pandas',
+    'rdflib',
 ]
 setup_requires = ['pytest-runner']
-tests_require = ['pytest', 'pytest-cov']
+tests_require = ['pytest', 'pytest-cov', 'mock']
 
 setup(
     name='torch_geometric',

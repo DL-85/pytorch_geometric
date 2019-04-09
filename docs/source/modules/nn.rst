@@ -4,17 +4,29 @@ torch_geometric.nn
 .. contents:: Contents
     :local:
 
-Convolution Layers
-------------------
+Convolutional Layers
+--------------------
+
+.. automodule:: torch_geometric.nn.conv.message_passing
+    :members:
 
 .. automodule:: torch_geometric.nn.conv
     :members:
     :undoc-members:
+    :exclude-members: message, update, MessagePassing
 
-Propagation Layers
-------------------
+.. automodule:: torch_geometric.nn.meta
+    :members:
+    :undoc-members:
 
-.. automodule:: torch_geometric.nn.prop
+.. automodule:: torch_geometric.nn.dense.dense_sage_conv
+    :members:
+    :undoc-members:
+
+Global Pooling Layers
+---------------------
+
+.. automodule:: torch_geometric.nn.glob
     :members:
     :undoc-members:
 
@@ -22,5 +34,30 @@ Pooling Layers
 --------------
 
 .. automodule:: torch_geometric.nn.pool
+    :members:
+    :undoc-members:
+
+.. automodule:: torch_geometric.nn.dense.diff_pool
+    :members:
+    :undoc-members:
+
+Unpooling Layers
+----------------
+
+.. automodule:: torch_geometric.nn.unpool
+    :members:
+    :undoc-members:
+
+Models
+------
+
+.. automodule:: torch_geometric.nn.models
+    :members:
+    :undoc-members:
+
+DataParallel layers
+-------------------
+
+.. automodule:: torch_geometric.nn.data_parallel
     :members:
     :undoc-members:

@@ -8,21 +8,23 @@ from torch_geometric.nn import GCNConv, ChebConv  # noqa
 
 dataset = 'Cora'
 path = osp.join(osp.dirname(osp.realpath(__file__)), '..', 'data', dataset)
-data = Planetoid(path, dataset, T.NormalizeFeatures())[0]
+dataset = Planetoid(path, dataset, T.NormalizeFeatures())
+data = dataset[0]
 
 
 class Net(torch.nn.Module):
     def __init__(self):
         super(Net, self).__init__()
-        self.conv1 = GCNConv(data.num_features, 16)
-        self.conv2 = GCNConv(16, data.num_classes)
+        self.conv1 = GCNConv(dataset.num_features, 16, cached=True)
+        self.conv2 = GCNConv(16, dataset.num_classes, cached=True)
         # self.conv1 = ChebConv(data.num_features, 16, K=2)
         # self.conv2 = ChebConv(16, data.num_features, K=2)
 
     def forward(self):
-        x = F.relu(self.conv1(data.x, data.edge_index))
+        x, edge_index = data.x, data.edge_index
+        x = F.relu(self.conv1(x, edge_index))
         x = F.dropout(x, training=self.training)
-        x = self.conv2(x, data.edge_index)
+        x = self.conv2(x, edge_index)
         return F.log_softmax(x, dim=1)
 
 
@@ -48,7 +50,12 @@ def test():
     return accs
 
 
-for epoch in range(1, 101):
+best_val_acc = test_acc = 0
+for epoch in range(1, 201):
     train()
+    train_acc, val_acc, tmp_test_acc = test()
+    if val_acc > best_val_acc:
+        best_val_acc = val_acc
+        test_acc = tmp_test_acc
     log = 'Epoch: {:03d}, Train: {:.4f}, Val: {:.4f}, Test: {:.4f}'
-    print(log.format(epoch, *test()))
+    print(log.format(epoch, train_acc, best_val_acc, test_acc))

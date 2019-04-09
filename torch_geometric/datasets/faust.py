@@ -7,10 +7,49 @@ from torch_geometric.read import read_ply
 
 
 class FAUST(InMemoryDataset):
+    r"""The FAUST humans dataset from the `"FAUST: Dataset and Evaluation for
+    3D Mesh Registration"
+    <http://files.is.tue.mpg.de/black/papers/FAUST2014.pdf>`_ paper,
+    containing 100 watertight meshes representing 10 different poses for 10
+    different subjects.
+
+    .. note::
+
+        Data objects hold mesh faces instead of edge indices.
+        To convert the mesh to a graph, use the
+        :obj:`torch_geometric.transforms.FaceToEdge` as :obj:`pre_transform`.
+        To convert the mesh to a point cloud, use the
+        :obj:`torch_geometric.transforms.SamplePoints` as :obj:`transform` to
+        sample a fixed number of points on the mesh faces according to their
+        face area.
+
+    Args:
+        root (string): Root directory where the dataset should be saved.
+        train (bool, optional): If :obj:`True`, loads the training dataset,
+            otherwise the test dataset. (default: :obj:`True`)
+        transform (callable, optional): A function/transform that takes in an
+            :obj:`torch_geometric.data.Data` object and returns a transformed
+            version. The data object will be transformed before every access.
+            (default: :obj:`None`)
+        pre_transform (callable, optional): A function/transform that takes in
+            an :obj:`torch_geometric.data.Data` object and returns a
+            transformed version. The data object will be transformed before
+            being saved to disk. (default: :obj:`None`)
+        pre_filter (callable, optional): A function that takes in an
+            :obj:`torch_geometric.data.Data` object and returns a boolean
+            value, indicating whether the data object should be included in the
+            final dataset. (default: :obj:`None`)
+    """
+
     url = 'http://faust.is.tue.mpg.de/'
 
-    def __init__(self, root, train=True, transform=None, pre_transform=None):
-        super(FAUST, self).__init__(root, transform, pre_transform)
+    def __init__(self,
+                 root,
+                 train=True,
+                 transform=None,
+                 pre_transform=None,
+                 pre_filter=None):
+        super(FAUST, self).__init__(root, transform, pre_transform, pre_filter)
         path = self.processed_paths[0] if train else self.processed_paths[1]
         self.data, self.slices = torch.load(path)
 
@@ -36,6 +75,8 @@ class FAUST(InMemoryDataset):
         for i in range(100):
             data = read_ply(path.format(i))
             data.y = torch.tensor([i % 10], dtype=torch.long)
+            if self.pre_filter is not None and not self.pre_filter(data):
+                continue
             if self.pre_transform is not None:
                 data = self.pre_transform(data)
             data_list.append(data)

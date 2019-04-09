@@ -1,10 +1,12 @@
+import os
 import os.path as osp
 import glob
 
 import torch
 import numpy as np
+from torch_sparse import coalesce
 from torch_geometric.read import read_txt_array
-from torch_geometric.utils import coalesce, remove_self_loops, one_hot
+from torch_geometric.utils import remove_self_loops, one_hot
 from torch_geometric.data import Data
 
 names = [
@@ -15,12 +17,12 @@ names = [
 
 def read_tu_data(folder, prefix):
     files = glob.glob(osp.join(folder, '{}_*.txt'.format(prefix)))
-    names = ['_'.join(f.split('/')[-1].split('_')[1:])[:-4] for f in files]
+    names = [f.split(os.sep)[-1][len(prefix) + 1:-4] for f in files]
 
     edge_index = read_file(folder, prefix, 'A', torch.long).t() - 1
     batch = read_file(folder, prefix, 'graph_indicator', torch.long) - 1
 
-    node_attributes, node_labels = None, None
+    node_attributes = node_labels = None
     if 'node_attributes' in names:
         node_attributes = read_file(folder, prefix, 'node_attributes')
     if 'node_labels' in names:
@@ -39,12 +41,14 @@ def read_tu_data(folder, prefix):
     y = None
     if 'graph_attributes' in names:  # Regression problem.
         y = read_file(folder, prefix, 'graph_attributes')
-    if 'graph_labels' in names:  # Classification problem.
+    elif 'graph_labels' in names:  # Classification problem.
         y = read_file(folder, prefix, 'graph_labels', torch.long)
-        y -= y.min(dim=0)[0]
+        _, y = y.unique(sorted=True, return_inverse=True)
 
+    num_nodes = edge_index.max().item() + 1 if x is None else x.size(0)
     edge_index, edge_attr = remove_self_loops(edge_index, edge_attr)
-    edge_index, edge_attr = coalesce(edge_index, edge_attr)
+    edge_index, edge_attr = coalesce(edge_index, edge_attr, num_nodes,
+                                     num_nodes)
 
     data = Data(x=x, edge_index=edge_index, edge_attr=edge_attr, y=y)
     data, slices = split(data, batch)

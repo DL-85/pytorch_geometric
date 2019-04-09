@@ -3,9 +3,10 @@ import os.path as osp
 from itertools import repeat
 
 import torch
+from torch_sparse import coalesce
 from torch_geometric.data import Data
 from torch_geometric.read import read_txt_array
-from torch_geometric.utils import coalesce, remove_self_loops
+from torch_geometric.utils import remove_self_loops
 
 try:
     import cPickle as pickle
@@ -14,9 +15,6 @@ except ImportError:
 
 
 def read_planetoid_data(folder, prefix):
-    """Reads the planetoid data format.
-    ind.{}.x
-    """
     names = ['x', 'tx', 'allx', 'y', 'ty', 'ally', 'graph', 'test.index']
     items = [read_file(folder, prefix, name) for name in names]
     x, tx, allx, y, ty, ally, graph, test_index = items
@@ -86,7 +84,7 @@ def edge_index_from_dict(graph_dict, num_nodes=None):
     # NOTE: There are duplicated edges and self loops in the datasets. Other
     # implementations do not remove them!
     edge_index, _ = remove_self_loops(edge_index)
-    edge_index, _ = coalesce(edge_index, num_nodes=num_nodes)
+    edge_index, _ = coalesce(edge_index, None, num_nodes, num_nodes)
     return edge_index
 
 

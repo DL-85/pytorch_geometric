@@ -3,7 +3,7 @@ import random
 
 class RandomScale(object):
     r"""Scales node positions by a randomly sampled factor :math:`s` within a
-    given interval, e.g., resulting in the transformation matrix
+    given interval, *e.g.*, resulting in the transformation matrix
 
     .. math::
         \begin{bmatrix}
@@ -21,6 +21,7 @@ class RandomScale(object):
     """
 
     def __init__(self, scales):
+        assert isinstance(scales, (tuple, list)) and len(scales) == 2
         self.scales = scales
 
     def __call__(self, data):
